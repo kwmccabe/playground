@@ -7,13 +7,13 @@
  * Show info
  * prototype "pages" for modules
  */
-class About: public Module 
+class About: public Module
 {
 public:
   About() {}   // use moduleSetup() for activate
   ~About() {}  // use moduleTeardown() for deactivate
 
-  virtual void moduleSetup() 
+  virtual void moduleSetup()
   {
     Serial.println("About::moduleSetup()");
     tft.enableDisplay(true);
@@ -24,16 +24,16 @@ public:
 
     moduleReset();
   }
-  
-  virtual void moduleTeardown() 
+
+  virtual void moduleTeardown()
   {
     Serial.println("About::moduleTeardown()");
     analogWrite(TFT_BACKLIGHT, 0);
     tft.fillScreen(ST77XX_BLACK);
-    tft.enableDisplay(false); 
+    tft.enableDisplay(false);
   }
-  
-  virtual void moduleReset() 
+
+  virtual void moduleReset()
   {
     about_mode  = 0;
     about_state = 0;
@@ -41,7 +41,7 @@ public:
     Serial.println("About::moduleReset()");
   }
 
-  virtual void leftButton() 
+  virtual void leftButton()
   {
     about_mode  = (about_mode+1) % 2;
     about_state = 0;
@@ -49,17 +49,17 @@ public:
     Serial.print("About::leftButton() - about_mode - "); Serial.println(about_mode);
   }
 
-  virtual void rightButton() 
+  virtual void rightButton()
   {
     about_delay = 100;
     Serial.println("About::rightButton()");
   }
 
   virtual unsigned long getModuleDelay() {
-    return about_delay;    
+    return about_delay;
   }
 
-  virtual void loop() 
+  virtual void loop()
   {
     //Serial.print("About::loop() - "); Serial.println(millis());
 
@@ -115,10 +115,10 @@ private:
       int textWidth  = getTextWidth( msg[idx] );
       int textHeight = getTextHeight( msg[idx] );
       int cx = (tft.width()/2)-(textWidth/2);
-      
+
       tft.setCursor(cx, cy);
       tft.print(msg[idx]);
-//Serial.print("About::page_zero - "); Serial.print(textSize); Serial.print(","); Serial.println(msg[idx]);
+//Serial.print("About::page_zero - "); Serial.print(idx); Serial.print(","); Serial.println(msg[idx]);
 
       cy += textHeight;
       if (cy > tft.height()) { break; }
@@ -126,12 +126,13 @@ private:
     }
     about_state = (about_state+1) % ELEMENTS(msg);
     about_delay = 1000;
+//Serial.print("About::page_zero - about_state - "); Serial.println(about_state);
   }
- 
+
    /*
    * static text
    */
-  void page_one() 
+  void page_one()
   {
     String msg[] = {
       "Jabberwocky",
@@ -193,14 +194,15 @@ private:
       int idx = i % ELEMENTS(msg);
 
       if (idx == 0) {
-        cy = printTitle( msg[idx], cx, cy );
-        tft.setTextSize(textSize);
+        cy = printTitle( msg[idx], 0, cy );
+        tft.setTextSize(textSize);  // reset
+
       } else {
         tft.setCursor(cx, cy);
         tft.print(msg[idx]);
         cy += textHeight;
       }
-//Serial.print("About::page_one - "); Serial.print(textSize); Serial.print(","); Serial.println(msg[idx]);
+//Serial.print("About::page_one - "); Serial.print(idx); Serial.print(","); Serial.println(msg[idx]);
 
       if (cy > tft.height()) { break; }
       line++;
@@ -208,10 +210,11 @@ private:
 
     about_state = (about_state+tft.height()/textHeight/4) % ELEMENTS(msg);
     about_delay = 60*1000;
+//Serial.print("About::page_one - about_state - "); Serial.println(about_state);
   }
 
- 
+
 };
 
 #endif
-  
+

@@ -23,17 +23,10 @@ public:
   virtual void loop() = 0;
 };
 
-/*
- * UTILS
- */
-#define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
-/* UTIL: adjust tft backlight */
-void setBacklight(int level)
-{
-  level = level % 256;
-  analogWrite(TFT_BACKLIGHT, level);
-}
+
+/* UTIL: number of elements in an array */
+#define ELEMENTS(x)   (sizeof(x) / sizeof(x[0]))
 
 /* UTIL: Linear interpolation */
 float lerp(float x, float in_min, float in_max, float out_min, float out_max)
@@ -55,6 +48,7 @@ uint16_t RGB888toRGB565(const char *rgb32_str_)
 }
 
 /* UTIL: Convert 16bit color value to 32bit */
+
 uint32_t RGB565toRGB888(const char *rgb16_str_)
 {
   long rgb16 = strtoul(rgb16_str_, 0, 16);
@@ -65,24 +59,28 @@ uint32_t RGB565toRGB888(const char *rgb16_str_)
   int b = (rgb16 & 0x001F);
 Serial.print("RGB565toRGB888() - r,g,b- "); Serial.print(r); Serial.print(","); Serial.print(g); Serial.print(","); Serial.println(b);
 
-/*
-  r = r * 255 / 31;
-  g = g * 255 / 63;
-  b = b * 255 / 31;
-
-  r = (int) floor( r * 255.0 / 31.0 + 0.5);
-  g = (int) floor( g * 255.0 / 63.0 + 0.5);
-  b = (int) floor( b * 255.0 / 31.0 + 0.5);
-*/
-  r = ( r * 527 + 23 ) >> 6;
-  g = ( g * 259 + 33 ) >> 6;
-  b = ( b * 527 + 23 ) >> 6;
+/* FIX THIS */
+  int method = 0;
+  if (method == 0) {
+    r = r * 255 / 31;
+    g = g * 255 / 63;
+    b = b * 255 / 31;
+  } else if (method == 1) {
+    r = (int) floor( r * 255.0 / 31.0 + 0.5);
+    g = (int) floor( g * 255.0 / 63.0 + 0.5);
+    b = (int) floor( b * 255.0 / 31.0 + 0.5);
+  } else if (method == 2) {
+    r = ( r * 527 + 23 ) >> 6;
+    g = ( g * 259 + 33 ) >> 6;
+    b = ( b * 527 + 23 ) >> 6;
+  }
 
 Serial.print("RGB565toRGB888() - r,g,b- "); Serial.print(r); Serial.print(","); Serial.print(g); Serial.print(","); Serial.println(b);
+//Serial.print("RGB565toRGB888() - r,g,b- "); Serial.print(r << 16); Serial.print(","); Serial.print(g << 8); Serial.print(","); Serial.println(b);
   return (r << 16) | (g << 8) | b;
 }
 
-/* UTIL: Set neopixels color, index from->to */
+/* UTIL: Set neopixel color, index from->to */
 static void setPixelColors(uint8_t from, uint8_t to, uint32_t c) {
   uint8_t first = (from > to) ? to : from;
   uint8_t last  = (from > to) ? from : to;
@@ -131,38 +129,37 @@ int getTextHeight( String text )
 int getMaxTextSize( String text, int maxWidth )
 {
   int textSize = 1;
-  while(true) {
+  int curWidth = 1;
+  while(curWidth < maxWidth) {
     textSize++;
     tft.setTextSize(textSize);
-    int width = getTextWidth( text );
-    if (width > maxWidth)
-      { break; }
+    curWidth = getTextWidth( text );
   }
   return textSize-1;
 }
 
 /*
 * print text max size/width for display
-* xpos>0 align left ; xpos=0 center ; xpos<0 align right
-* return ypos plus calculated height
+* xpos=0 center ; xpos>0 from left ; xpos<0 from right
+* return ypos plus calculated height, for next line
 * eg: ypos = printTitle( "my text", 0, ypos );
 */
 int printTitle( String text, int xpos, int ypos )
 {
-int textSize   = getMaxTextSize(text, tft.width());
-tft.setTextSize(textSize);
+  int textSize = getMaxTextSize(text, tft.width());
+  tft.setTextSize(textSize);
 
-int textWidth  = getTextWidth( text );
-int textHeight = getTextHeight( text );
-int cx = xpos; // if (xpos > 0)
-if (xpos < 0)  { cx = tft.width() - xpos; }
-if (xpos == 0) { cx = (tft.width()/2)-(textWidth/2); }
-int cy = ypos;
+  int textWidth  = getTextWidth( text );
+  int textHeight = getTextHeight( text );
+  int cx = xpos; // if (xpos > 0)
+  if (xpos < 0)  { cx = tft.width() - xpos; }
+  if (xpos == 0) { cx = (tft.width()/2)-(textWidth/2); }
+  int cy = ypos;
 
-tft.setCursor(cx, cy);
-tft.print(text);
+  tft.setCursor(cx, cy);
+  tft.print(text);
 
-return ypos + textHeight;
+  return ypos + textHeight;
 }
 
 #endif

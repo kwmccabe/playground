@@ -19,6 +19,7 @@ String TUNES[][3] = {
   {   "m1", "playTune_PrestoMozart",  "Presto - Mozart" },
 
   {   "m2", "m0", "SCALES" },
+  // major
   {   "m2", "playScale_C4",  "C4 Major" },
   {   "m2", "playScale_D4",  "D4 Major" },
   {   "m2", "playScale_E4",  "E4 Major" },
@@ -1104,7 +1105,7 @@ private:
       { fC8, T10 }, { fD8, t14 }, { fE8, t14 }, { fF8, t14 }, { fG8, t14 }, { fA8, t14 }, { fB8, t14 },
 
       { fREST, T40 }, 
-};
+    };
     playTones( 100, melody, ELEMENTS(melody) );
   }
 
