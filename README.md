@@ -18,3 +18,8 @@
 * LightSensor - display overall light level
 * SoundSensor - display sound levels
 * TempSensor  - display temperature
+
+
+| ![Circuit Playground Gizmo](/img/playground_front.jpeg) | ![Circuit Playground Bluefruit](/img/playground_back.jpeg) |
+| --- | --- |
+| front | back |
