@@ -33,10 +33,16 @@
 #include <Adafruit_CircuitPlayground.h>
 #include <Adafruit_GFX.h>        // Core graphics library, includes 5x7 classic font
 #include <Adafruit_ST7789.h>     // Hardware-specific library for ST7789
-#include <Adafruit_SleepyDog.h>  // Watchdog timer
+
 #include <Wire.h>
 #include <SPI.h>
 //#include <math.h>
+
+//#include <Adafruit_SleepyDog.h>  // Watchdog timer [1.2.0 error]
+// Arduino: 1.8.12 (Mac OS X), Board: "Adafruit Circuit Playground Bluefruit, 0.3.2 SoftDevice s140 6.1.1, Level 0 (Release)"
+// /Users/kwmccabe/Documents/Arduino/libraries/Adafruit_SleepyDog_Library/utility/WatchdogNRF.cpp
+//    error: cannot convert 'nrf_wdt_rr_register_t' to 'NRF_WDT_Type*'
+
 
 #include <Fonts/Org_01.h>         // Wx6
 //#include <Fonts/Tiny3x3a2pt7b.h>  // 3x3
@@ -56,7 +62,7 @@
 SPIClass* spi = &SPI;
 Adafruit_ST7789 tft = Adafruit_ST7789(spi, TFT_CS, TFT_DC, TFT_RST);
 
-/* MODULES */
+/* MODULE FILES */
 #include "Module.h"
 #include "Finder.h"
 #include "About.h"
@@ -69,6 +75,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(spi, TFT_CS, TFT_DC, TFT_RST);
 #include "SoundSensor.h"
 #include "TempSensor.h"
 
+/* MODULE INSTANCES */
 Finder finder;
 About about;
 Blink blink;
@@ -80,6 +87,8 @@ LightSensor lightSensor;
 SoundSensor soundSensor;
 TempSensor tempSensor;
 
+/* MODULE POINTERS */
+int module = 0;          // current module : MODULES[module]
 Module* MODULES[] = {
   &finder,
   &about,
@@ -92,24 +101,24 @@ Module* MODULES[] = {
   &soundSensor,
   &tempSensor,
 };
-int module = 0;
 
+/* MAIN MENU */
 String MENUS[][4] = {
-  {   "m0", "m0", "PLAYGROUND", "[LFT] Open selection \n[RGT] Select next \n[SHAKE] Clear selection" },
-  {   "m0", "m1", "GAMES",      "[LFT] Open Submenu" },
-  {   "m0", "5",  "MUSIC BOX",    "[LFT] Open Submenu" },
-  {   "m0", "m2", "SENSORS",    "[LFT] Open Submenu" },
-  {   "m0", "1",  "About",        "[LFT] Open About\n[RGT] Next" },
-  {   "m1", "m0", "GAMES",      "[LFT] Open selection \n[RGT] Select next \n[SHAKE] Clear selection" },
-  {   "m1", "2",  "Blink",        "[LFT] Open Blink\n[RGT] Add one (1) to blink #\n[SHAKE] Reset" },
-  {   "m1", "3",  "Dice",         "[LFT] Open Dice\n[RGT] D2, 3, 4, 6, 8, 10, 12, 20, 100\n[SHAKE] Roll" },
-  {   "m1", "4",  "Game of Life", "[LFT] Open Life\n[RGT] Regenerate colors\n[SHAKE] Regenerate colony" },
-//  {   "m1", "5",  "Music Box",    "[LFT] Open Music Box\n[RGT] Next tune\n[SHAKE] Reset" },
-  {   "m2", "m0", "SENSORS",    "[LFT] Open selection \n[RGT] Select next \n[SHAKE] Clear selection" },
-  {   "m2", "6",  "Color Sensor", "[LFT] Open Sensor" },
-  {   "m2", "7",  "Light Sensor", "[LFT] Open Sensor\n[RGT] Set range" },
-  {   "m2", "8",  "Sound Sensor", "[LFT] Open Sensor\n[RGT] Set range" },
-  {   "m2", "9",  "Temp Sensor",  "[LFT] Open Sensor\n[RGT] Set range" },
+  {   "m0", "m0", "PLAYGROUND", " [LFT] Open selection \n [RGT] Select next \n [SHAKE] Clear selection" },
+  {   "m0", "m1", "GAMES",      " [LFT] Open Submenu" },
+  {   "m0", "5",  "MUSIC BOX",    " [LFT] Open Submenu" },
+  {   "m0", "m2", "SENSORS",    " [LFT] Open Submenu" },
+  {   "m0", "1",  "About",        " [LFT] Open About\n [RGT] Next" },
+  {   "m1", "m0", "GAMES",      " [LFT] Open selection \n [RGT] Select next \n [SHAKE] Clear selection" },
+  {   "m1", "2",  "Blink",        " [LFT] Open Blink\n [RGT] Add one (1) to blink #\n [SHAKE] Reset" },
+  {   "m1", "3",  "Dice",         " [LFT] Open Dice\n [RGT] D2, 3, 4, 6, 8, 10, 12, 20, 100\n [SHAKE] Roll" },
+  {   "m1", "4",  "Game of Life", " [LFT] Open Life\n [RGT] Regenerate colors\n [SHAKE] Regenerate colony" },
+//  {   "m1", "5",  "Music Box",    " [LFT] Open Music Box\n [RGT] Next tune\n [SHAKE] Reset" },
+  {   "m2", "m0", "SENSORS",    " [LFT] Open selection \n [RGT] Select next \n [SHAKE] Clear selection" },
+  {   "m2", "6",  "Color Sensor", " [LFT] Open Sensor" },
+  {   "m2", "7",  "Light Sensor", " [LFT] Open Sensor\n [RGT] Set range" },
+  {   "m2", "8",  "Sound Sensor", " [LFT] Open Sensor\n [RGT] Set range" },
+  {   "m2", "9",  "Temp Sensor",  " [LFT] Open Sensor\n [RGT] Set range" },
   };
 
 
@@ -118,7 +127,7 @@ unsigned long module_timer = 0;
 unsigned long module_delay = 1000;
 unsigned long button_timer = 0;
 unsigned long button_delay = 500;
-
+bool sleepy = false;
 
 /*
  * Init serial port, circuit playground library, tft screen
@@ -157,13 +166,13 @@ void loop()
   //Serial.print("Main::loop() - "); Serial.println(millis()); delay(500);
 
   // check switch
-  bool sleepy = false;
   while (!CircuitPlayground.slideSwitch()) {
     if (!sleepy) {
       MODULES[module]->moduleTeardown();
       sleepy = true;
     }
-    Watchdog.sleep(3000);
+    //Watchdog.sleep(3000);
+    delay(3000); return;
   }
   if (sleepy) {
     MODULES[module]->moduleSetup();
